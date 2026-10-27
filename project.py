@@ -6,11 +6,12 @@ from google import genai
 
 load_dotenv()
 
+# Connect to Gemini using the API key stored in .env
 client = genai.Client(
     api_key=os.environ["GEMINI_API_KEY"]
 )
 
-# Our original four documents
+# Our four knowledge-base documents
 documents = [
     "Refund requests are allowed within 7 days.",
     "Python classes happen Monday to Friday.",
@@ -18,7 +19,7 @@ documents = [
     "Course access is available for 6 months."
 ]
 
-# Cache document embeddings while this Python process is running
+# Store document embeddings while the app is running
 document_vectors_cache = None
 
 
@@ -51,13 +52,14 @@ def cosine_similarity(a, b):
     if denominator == 0:
         return 0.0
 
-    return np.dot(a, b) / denominator
+    return float(np.dot(a, b) / denominator)
 
 
 def get_answer(question):
+    # Step 1: Get embeddings for our documents
     document_vectors = get_document_vectors()
 
-    # Create an embedding for the user's question
+    # Step 2: Convert the user's question into an embedding
     question_result = client.models.embed_content(
         model="gemini-embedding-2",
         contents=question
@@ -65,7 +67,7 @@ def get_answer(question):
 
     question_vector = question_result.embeddings[0].values
 
-    # Compare the question with every document
+    # Step 3: Compare the question with each document
     scores = []
 
     for document, vector in zip(documents, document_vectors):
@@ -73,26 +75,49 @@ def get_answer(question):
         scores.append(score)
 
         print(
-            "Score:", round(float(score), 3),
+            "Similarity:", round(score, 3),
             "| Document:", document
         )
 
-    # Find the document with the highest similarity
+    # Step 4: Find the closest matching document
     best_index = int(np.argmax(scores))
     best_doc = documents[best_index]
-    best_score = float(scores[best_index])
+    best_score = scores[best_index]
 
-    print("\nBest matching document:")
-    print(best_doc)
-    print("Similarity score:", round(best_score, 3))
+    print("\nBest matching document:", best_doc)
+    print("Best similarity score:", round(best_score, 3))
 
-    # Reject weak matches
+    # Step 5: Reject questions that don't match our knowledge base
     if best_score < 0.60:
         return "Information is not available in my documents."
 
-    # TEMPORARY: return the retrieved document directly.
-    # Gemini text generation is disabled while its quota is exhausted.
-    return best_doc
+    # Step 6: Ask Gemini to formulate an answer using retrieved context
+    prompt = f"""
+You are a helpful assistant answering questions about a course.
+
+Use ONLY the context below to answer the user's question.
+Do not invent facts or add information that is not in the context.
+If the context does not answer the question, say:
+"Information is not available in my documents."
+
+Context:
+{best_doc}
+
+User question:
+{question}
+
+Give a concise, direct answer.
+"""
+
+    response = client.models.generate_content(
+        model="gemini-3.8-flash",
+        contents=prompt
+    )
+
+    if not response.text:
+        return "I couldn't generate an answer. Please try again."
+
+    return response.text.strip()
 
 
 if __name__ == "__main__":
@@ -101,3 +126,8 @@ if __name__ == "__main__":
 
     print("\nFinal Answer:")
     print(answer)
+
+
+
+
+
