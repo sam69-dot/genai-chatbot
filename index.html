@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural AI | Chat Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at top, #17152e 0%, transparent 50%),
+                #0b0d12;
+            color: #f1f3f9;
+            font-family: "Segoe UI", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 760px;
+            min-height: 520px;
+            background: rgba(19, 21, 31, 0.96);
+            border: 1px solid #292d3d;
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .top-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #a9a0ff;
+            background: rgba(130, 117, 255, 0.1);
+            border: 1px solid rgba(130, 117, 255, 0.22);
+            padding: 8px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #67e8a5;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(103, 232, 165, 0.6);
+        }
+
+        h1 {
+            margin: 24px 0 10px;
+            font-size: clamp(30px, 5vw, 42px);
+            letter-spacing: -1.5px;
+            line-height: 1.15;
+        }
+
+        .gradient-text {
+            background: linear-gradient(100deg, #a99aff, #66b8ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: #969caf;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0 0 32px;
+        }
+
+        .section-label {
+            display: block;
+            color: #b6bbcc;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            background: #10121b;
+            color: #f1f3f9;
+            border: 1px solid #303548;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: #8275ff;
+            box-shadow: 0 0 0 3px rgba(130, 117, 255, 0.12);
+        }
+
+        input::placeholder {
+            color: #70778b;
+        }
+
+        button {
+            background: linear-gradient(135deg, #8275ff, #568cff);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 0 22px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            opacity: 0.92;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+            transform: none;
+        }
+
+        .answer-card {
+            margin-top: 28px;
+            padding: 22px;
+            background: #10121b;
+            border: 1px solid #292d3d;
+            border-radius: 16px;
+            min-height: 135px;
+        }
+
+        .answer-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .answer-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: rgba(130, 117, 255, 0.15);
+            color: #afa5ff;
+            font-size: 17px;
+        }
+
+        #answer {
+            color: #d1d5e2;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            margin: 0;
+        }
+
+        .placeholder-answer {
+            color: #747b90 !important;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 22px;
+            color: #737a8d;
+            font-size: 12px;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 14px;
+                align-items: flex-start;
+            }
+
+            .chat-container {
+                margin-top: 16px;
+                padding: 24px 18px;
+                border-radius: 20px;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            input,
+            button {
+                width: 100%;
+                min-height: 50px;
+            }
+
+            .footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="chat-container">
+
+        <div class="top-label">
+            <span class="status-dot"></span>
+            AI ASSISTANT
+        </div>
+
+        <h1>Ask anything.<br><span class="gradient-text">Get intelligent answers.</span></h1>
+
+        <p class="subtitle">
+            Your AI-powered assistant retrieves relevant information
+            to help answer your questions.
+        </p>
+
+        <label class="section-label" for="question">
+            YOUR QUESTION
+        </label>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="question"
+                placeholder="Ask me something..."
+                autocomplete="off"
+            >
+
+            <button id="sendButton" type="button">
+                Send ↗
+            </button>
+        </div>
+
+        <section class="answer-card">
+            <div class="answer-heading">
+                <span class="answer-icon">✦</span>
+                AI Response
+            </div>
+
+            <p id="answer" class="placeholder-answer">
+                Your answer will appear here. Ask a question to get started.
+            </p>
+        </section>
+
+        <div class="footer">
+            <span>Powered by your Gemini RAG pipeline</span>
+            <span>AI responses may need verification</span>
+        </div>
+
+    </main>
+
+    <script>
+        const questionBox = document.getElementById("question");
+        const answerBox = document.getElementById("answer");
+        const sendButton = document.getElementById("sendButton");
+
+        async function sendQuestion() {
+            const question = questionBox.value.trim();
+
+            if (!question) {
+                answerBox.textContent = "Please enter a question first.";
+                answerBox.classList.remove("placeholder-answer");
+                questionBox.focus();
+                return;
+            }
+
+            answerBox.textContent = "Thinking... Finding the most relevant information.";
+            answerBox.classList.remove("placeholder-answer");
+            sendButton.disabled = true;
+            sendButton.textContent = "Thinking...";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                if (!response.ok) {
+                    throw new Error("The server returned status " + response.status);
+                }
+
+                const data = await response.json();
+                answerBox.textContent = data.answer || "No answer was returned.";
+            } catch (error) {
+                answerBox.textContent =
+                    "Couldn't connect to the AI server. Make sure FastAPI is running in your terminal, then try again.";
+                console.error("Chat error:", error);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = "Send ↗";
+            }
+        }
+
+        sendButton.addEventListener("click", sendQuestion);
+
+        questionBox.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendQuestion();
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+
+
