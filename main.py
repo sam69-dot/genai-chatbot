@@ -1,7 +1,8 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from google.genai.errors import ClientError, ServerError
 from project import get_answer
 
 app = FastAPI()
@@ -18,9 +19,6 @@ class ChatRequest(BaseModel):
     question: str
 
 
-from fastapi import HTTPException
-from google.genai.errors import ClientError
-
 @app.post("/chat")
 def chat(request: ChatRequest):
     try:
@@ -30,12 +28,21 @@ def chat(request: ChatRequest):
     except ClientError as e:
         if "RESOURCE_EXHAUSTED" in str(e):
             return {
-                "answer": "Free quota finished. Please try again later."
+                "answer": "Gemini's free quota is exhausted. Please try again later."
             }
 
         raise HTTPException(
-            status_code=500,
-            detail="Something went wrong with the Gemini API."
+            status_code=502,
+            detail="The Gemini API rejected the request."
         )
 
+    except ServerError as e:
+        if "503" in str(e) or "UNAVAILABLE" in str(e):
+            return {
+                "answer": "The AI service is temporarily unavailable. Please try again later."
+            }
 
+        raise HTTPException(
+            status_code=502,
+            detail="The Gemini service encountered an error."
+        )
